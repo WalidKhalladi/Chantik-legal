@@ -20,4 +20,4 @@ For questions regarding these documents:
 
 ---
 
-© 2024 Chantik. All rights reserved.
+© 2025 Chantik. All rights reserved.
