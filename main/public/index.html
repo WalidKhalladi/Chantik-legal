@@ -60,7 +60,7 @@
                     Documentez votre travail quotidien, suivez vos finances et partagez des rapports professionnels en un clic.
                 </p>
                 <!-- Quick Signup Form - Captures visitors immediately -->
-                <form class="hero-signup-form" action="https://formspree.io/f/xjgvjnrl" method="POST">
+                <form class="hero-signup-form" id="heroForm">
                     <div class="hero-form-group">
                         <input type="email" name="email" placeholder="Entrez votre email" required>
                         <button type="submit" class="btn btn-primary">
@@ -213,7 +213,7 @@
                 <div class="mid-cta-content">
                     <h3>Convaincu? 🎯</h3>
                     <p>Rejoignez +100 entrepreneurs déjà inscrits</p>
-                    <form class="mid-cta-form" action="https://formspree.io/f/xjgvjnrl" method="POST">
+                    <form class="mid-cta-form" id="midCtaForm">
                         <input type="email" name="email" placeholder="Votre email" required>
                         <button type="submit" class="btn btn-primary">S'inscrire maintenant</button>
                     </form>
@@ -307,7 +307,7 @@
                         Inscrivez-vous et recevez une notification dès que l'application sera disponible sur Google Play.
                     </p>
                     
-                    <form class="waitlist-form" action="https://formspree.io/f/xjgvjnrl" method="POST">
+                    <form class="waitlist-form" id="waitlistForm">
                         <div class="form-group">
                             <input type="email" name="email" id="email" placeholder="Votre email" class="form-input" required>
                             <button type="submit" class="btn btn-primary">
@@ -423,13 +423,31 @@
                 </div>
             </div>
             <div class="footer-bottom">
-                <p>© 2025 Chantik. Tous droits réservés. Made with ❤️ to Tunisia 🇹🇳</p>
-                <p class="developer-credit">Développé par Walid Khalladi</p>
+                <p>© 2025 Khalladi Group. Tous droits réservés. Made with ❤️ to Tunisia 🇹🇳</p>
             </div>
         </div>
     </footer>
 
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.0/firebase-firestore-compat.js"></script>
+
     <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyB0mALxW9ZfOJHbwAKMMVf2oK7BfmgZBk8",
+            authDomain: "chantik-web.firebaseapp.com",
+            projectId: "chantik-web",
+            storageBucket: "chantik-web.firebasestorage.app",
+            messagingSenderId: "1061441570100",
+            appId: "1:1061441570100:web:707e8beb86d440271bd161",
+            measurementId: "G-N790FZJMH6"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
         // Mobile menu toggle
         const navToggle = document.querySelector('.nav-toggle');
         const navLinks = document.querySelector('.nav-links');
@@ -466,7 +484,67 @@
             }
         });
 
-        // Form is now handled by Formspree - submissions go directly to your email!
+        // Handle waitlist form submissions with Firebase
+        async function handleFormSubmit(form, event) {
+            event.preventDefault();
+            
+            const emailInput = form.querySelector('input[type="email"]');
+            const button = form.querySelector('button[type="submit"]');
+            const email = emailInput.value.trim().toLowerCase();
+            
+            // Basic validation
+            if (!email || !email.includes('@') || email.length < 5) {
+                return;
+            }
+            
+            const originalText = button.innerHTML;
+            
+            try {
+                // Show loading state
+                button.innerHTML = '<span>⏳</span> ...';
+                button.disabled = true;
+                
+                // Save to Firestore
+                await db.collection('waitlist').doc(email).set({
+                    email: email,
+                    timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    source: form.id || 'unknown',
+                    userAgent: navigator.userAgent,
+                    language: navigator.language
+                });
+                
+                // Success state
+                button.innerHTML = '<span>✓</span> Inscrit!';
+                button.style.background = '#2E7D32';
+                emailInput.value = '';
+                
+                // Reset after 3 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                    button.disabled = false;
+                }, 3000);
+                
+            } catch (error) {
+                console.error('Error saving to waitlist:', error);
+                
+                // Error state
+                button.innerHTML = '<span>✗</span> Erreur';
+                button.style.background = '#c62828';
+                
+                // Reset after 2 seconds
+                setTimeout(() => {
+                    button.innerHTML = originalText;
+                    button.style.background = '';
+                    button.disabled = false;
+                }, 2000);
+            }
+        }
+
+        // Attach form handlers
+        document.getElementById('heroForm')?.addEventListener('submit', (e) => handleFormSubmit(e.target, e));
+        document.getElementById('midCtaForm')?.addEventListener('submit', (e) => handleFormSubmit(e.target, e));
+        document.getElementById('waitlistForm')?.addEventListener('submit', (e) => handleFormSubmit(e.target, e));
 
         // Floating CTA visibility - hide when hero form is visible, show when scrolled
         const floatingCta = document.getElementById('floatingCta');
